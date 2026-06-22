@@ -1,0 +1,68 @@
+[
+  {
+    "name": "GitHub Pages",
+    "cname": ["github.io"],
+    "response": ["There isn't a GitHub Pages site here.", "For root domains (like example.com) custom domains"],
+    "nxdomain": false
+  },
+  {
+    "name": "Amazon S3",
+    "cname": ["amazonaws.com"],
+    "response": ["NoSuchBucket", "The specified bucket does not exist"],
+    "nxdomain": false
+  },
+  {
+    "name": "Heroku",
+    "cname": ["herokucdn.com", "herokuapp.com"],
+    "response": ["no-such-app", "No such app", "no such app"],
+    "nxdomain": false
+  },
+  {
+    "name": "Shopify",
+    "cname": ["myshopify.com"],
+    "response": ["Sorry, this shop is currently unavailable", "Only one Shopify store can be claimed"],
+    "nxdomain": false
+  },
+  {
+    "name": "Surge.sh",
+    "cname": ["surge.sh"],
+    "response": ["project not found"],
+    "nxdomain": false
+  },
+  {
+    "name": "Tumblr",
+    "cname": ["domains.tumblr.com"],
+    "response": ["Whatever you were looking for is not here"],
+    "nxdomain": false
+  },
+  {
+    "name": "GitBook",
+    "cname": ["gitbook.io"],
+    "response": ["If you're the owner of this website, you should"],
+    "nxdomain": false
+  },
+  {
+    "name": "Ghost",
+    "cname": ["ghost.io"],
+    "response": ["The thing you were looking for is no longer here", "site-not-found"],
+    "nxdomain": false
+  },
+  {
+    "name": "Firebase Hosting",
+    "cname": ["firebaseapp.com"],
+    "response": ["Site Not Found", "The Firebase Hosting site you're trying to visit"],
+    "nxdomain": false
+  },
+  {
+    "name": "Cargo Collective",
+    "cname": ["cargocollective.com"],
+    "response": ["404 Not Found", "If you're looking for Cargo"],
+    "nxdomain": false
+  },
+  {
+    "name": "Wix",
+    "cname": ["wixdns.net"],
+    "response": ["Looks like this domain isn't connected to a website yet!"],
+    "nxdomain": false
+  }
+]
