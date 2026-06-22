@@ -19,9 +19,10 @@ A **Subdomain Takeover** occurs when a subdomain points to an external service p
 
 ## 🛠️ Installation & Setup
 
-1. **Navigate to the tool directory**:
+1. **Clone the repository & navigate to the directory**:
    ```bash
-   cd /home/kali/ZohebBugHunter/subdomain_takeover_monitor
+   git clone https://github.com/realzoheb/subdomain-takeover-monitor.git
+   cd subdomain-takeover-monitor
    ```
 
 2. **Install Python dependencies**:
