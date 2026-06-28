@@ -6,6 +6,7 @@ import argparse
 import requests
 import urllib3
 import dns.resolver
+from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import init, Fore, Style
 
@@ -57,13 +58,16 @@ def send_webhook(webhook_url, message):
     if not webhook_url:
         return
     try:
-        if "discord.com" in webhook_url:
+        parsed_url = urlparse(webhook_url)
+        host = (parsed_url.hostname or "").lower()
+
+        if host in {"discord.com", "discordapp.com"}:
             data = {"content": message}
             requests.post(webhook_url, json=data, timeout=WEBHOOK_TIMEOUT_SECONDS)
-        elif "hooks.slack.com" in webhook_url:
+        elif host == "hooks.slack.com":
             data = {"text": message}
             requests.post(webhook_url, json=data, timeout=WEBHOOK_TIMEOUT_SECONDS)
-        elif "api.telegram.org" in webhook_url:
+        elif host == "api.telegram.org":
             # Expected format: https://api.telegram.org/bot<token>/sendMessage?chat_id=<chat_id>
             requests.post(webhook_url, params={"text": message}, timeout=WEBHOOK_TIMEOUT_SECONDS)
     except Exception as e:
@@ -135,7 +139,7 @@ def main():
     target_group.add_argument("-d", "--domain", help="Single domain/subdomain to scan")
     target_group.add_argument("-l", "--list", help="File containing list of subdomains (one per line)")
     parser.add_argument("-t", "--threads", type=int, default=10, help="Number of concurrent threads (default: 10)")
-    parser.add_argument("-w", "--webhook", help="Webhook URL for Slack/Discord alerts")
+    parser.add_argument("-w", "--webhook", help="Webhook URL for Slack/Discord/Telegram alerts")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     
     args = parser.parse_args()
