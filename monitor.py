@@ -18,6 +18,8 @@ init(autoreset=True)
 # Global variables
 SIGNATURES_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "signatures.json")
 SIGNATURES = []
+HTTP_TIMEOUT_SECONDS = 6
+WEBHOOK_TIMEOUT_SECONDS = 5
 
 def load_signatures():
     global SIGNATURES
@@ -25,8 +27,10 @@ def load_signatures():
         print(f"{Fore.RED}[-] Signatures file not found at {SIGNATURES_FILE}")
         sys.exit(1)
     try:
-        with open(SIGNATURES_FILE, "r") as f:
+        with open(SIGNATURES_FILE, "r", encoding="utf-8") as f:
             SIGNATURES = json.load(f)
+        if not isinstance(SIGNATURES, list):
+            raise ValueError("signatures.json must contain a list of providers")
         print(f"{Fore.CYAN}[*] Loaded {len(SIGNATURES)} cloud service signatures.")
     except Exception as e:
         print(f"{Fore.RED}[-] Failed to load signatures: {str(e)}")
@@ -55,10 +59,13 @@ def send_webhook(webhook_url, message):
     try:
         if "discord.com" in webhook_url:
             data = {"content": message}
-            requests.post(webhook_url, json=data, timeout=5)
+            requests.post(webhook_url, json=data, timeout=WEBHOOK_TIMEOUT_SECONDS)
+        elif "hooks.slack.com" in webhook_url:
+            data = {"text": message}
+            requests.post(webhook_url, json=data, timeout=WEBHOOK_TIMEOUT_SECONDS)
         elif "api.telegram.org" in webhook_url:
             # Expected format: https://api.telegram.org/bot<token>/sendMessage?chat_id=<chat_id>
-            requests.post(webhook_url + f"&text={message}", timeout=5)
+            requests.post(webhook_url, params={"text": message}, timeout=WEBHOOK_TIMEOUT_SECONDS)
     except Exception as e:
         print(f"{Fore.RED}[!] Webhook notification failed: {str(e)}")
 
@@ -83,12 +90,17 @@ def check_takeover(domain, cnames, webhook_url, verbose):
                 urls = [f"https://{domain}", f"http://{domain}"]
                 for url in urls:
                     try:
-                        response = requests.get(url, timeout=6, verify=False, allow_redirects=True)
-                        response_text = response.text
+                        response = requests.get(
+                            url,
+                            timeout=HTTP_TIMEOUT_SECONDS,
+                            verify=False,
+                            allow_redirects=True,
+                        )
+                        response_text = response.text.lower()
                         
                         # Inspect response body for signatures
                         for sig in provider["response"]:
-                            if sig.lower() in response_text.lower():
+                            if sig.lower() in response_text:
                                 alert_msg = (
                                     f"🔥 [VULNERABLE] {domain} -> CNAME: {cname} | Provider: {provider['name']} "
                                     f"| Detected Signature: '{sig}'"
@@ -119,17 +131,17 @@ def scan_domain(domain, webhook_url, verbose):
 
 def main():
     parser = argparse.ArgumentParser(description="Subdomain Takeover Monitor - Elite Hunting Tool")
-    parser.add_argument("-d", "--domain", help="Single domain/subdomain to scan")
-    parser.add_argument("-l", "--list", help="File containing list of subdomains (one per line)")
+    target_group = parser.add_mutually_exclusive_group(required=True)
+    target_group.add_argument("-d", "--domain", help="Single domain/subdomain to scan")
+    target_group.add_argument("-l", "--list", help="File containing list of subdomains (one per line)")
     parser.add_argument("-t", "--threads", type=int, default=10, help="Number of concurrent threads (default: 10)")
     parser.add_argument("-w", "--webhook", help="Webhook URL for Slack/Discord alerts")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     
     args = parser.parse_args()
-    
-    if not args.domain and not args.list:
-        parser.print_help()
-        sys.exit(1)
+
+    if args.threads < 1:
+        parser.error("Threads must be at least 1.")
         
     load_signatures()
     
@@ -140,9 +152,15 @@ def main():
         if not os.path.exists(args.list):
             print(f"{Fore.RED}[-] Domains list file not found: {args.list}")
             sys.exit(1)
-        with open(args.list, "r") as f:
-            domains = [line.strip() for line in f if line.strip()]
-            
+        try:
+            with open(args.list, "r", encoding="utf-8") as f:
+                domains = [line.strip() for line in f if line.strip()]
+        except OSError as e:
+            print(f"{Fore.RED}[-] Failed to read domains list file: {str(e)}")
+            sys.exit(1)
+
+    domains = list(dict.fromkeys(domains))
+             
     print(f"{Fore.CYAN}[*] Loaded {len(domains)} targets for scanning...")
     
     # ThreadPool execution
@@ -153,7 +171,13 @@ def main():
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         futures = {executor.submit(scan_domain, d, args.webhook, args.verbose): d for d in domains}
         for future in as_completed(futures):
-            res = future.result()
+            domain = futures[future]
+            try:
+                res = future.result()
+            except Exception as e:
+                if args.verbose:
+                    print(f"{Fore.RED}[-] Unexpected error while scanning {domain}: {str(e)}")
+                continue
             if res and res[2]:  # If vulnerable is True
                 vuln_count += 1
                 
