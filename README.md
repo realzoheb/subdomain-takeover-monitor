@@ -12,7 +12,7 @@ A **Subdomain Takeover** occurs when a subdomain points to an external service p
 * **Multi-threaded Scanning**: High performance resolution using concurrent Python threads.
 * **Deep CNAME Inspection**: Automatically matches targets to 10+ popular cloud services.
 * **HTTP Body Signature Verification**: Confirms takeover possibilities by scanning response text against signatures.
-* **Alert Notifications**: Supports Telegram and Discord webhook integrations for live monitoring.
+* **Alert Notifications**: Supports Telegram, Slack, and Discord webhook integrations for live monitoring.
 * **Colorized Interactive Logs**: Clear status separation (`VULNERABLE`, `Clean`, `No CNAME`).
 
 ---
@@ -44,7 +44,7 @@ python3 monitor.py -h
 * `-d`, `--domain` : Scan a single target subdomain (e.g. `blog.target.com`).
 * `-l`, `--list`   : Scan a file containing a list of subdomains (one per line).
 * `-t`, `--threads`: Number of concurrent workers (default: 10).
-* `-w`, `--webhook`: URL for Slack/Discord webhook alerts.
+* `-w`, `--webhook`: URL for Slack, Discord, or Telegram webhook alerts.
 * `-v`, `--verbose`: Enable detailed scanning logs.
 
 ---
@@ -62,7 +62,7 @@ Create a file named `subdomains.txt` and populate it, then run:
 python3 monitor.py -l subdomains.txt -t 20
 ```
 
-### 3. Scan with Real-time Discord/Telegram Alerts
+### 3. Scan with Real-time Discord/Telegram/Slack Alerts
 ```bash
 python3 monitor.py -l subdomains.txt -w "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL"
 ```
